@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package proto;
+
+// Service to manage list of todo tasks
+service OrderService {
+  rpc CreateOrder(CreateRequest) returns (CreateResponse);
+  rpc UpdateOrder(CreateRequest) returns (UpdateResponse);
+}
+
+message CreateRequest{
+  int32 id = 1;
+  int32 user_id = 2;
+  string status = 3;
+}
+
+message CreateResponse{
+  string message = 1;
+}
+
+message UpdateResponse{
+  string message = 1;
+}

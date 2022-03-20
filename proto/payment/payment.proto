@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package proto;
+
+// Service to manage list of todo tasks
+service PaymentService {
+  rpc UpdatePayment(PaymentRequest) returns (PaymentResponse);
+}
+
+message PaymentRequest{
+  int32 id = 1;
+  int32 user_id = 2;
+  int32 money = 3;
+}
+
+message PaymentResponse{
+  string message = 1;
+}

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package proto;
+
+// Service to manage list of todo tasks
+service StockService {
+  rpc UpdateStock(StockRequest) returns (StockResponse);
+}
+
+message StockRequest{
+  int32 id = 1;
+  int32 stock = 2;
+}
+
+message StockResponse{
+  string message = 1;
+}
