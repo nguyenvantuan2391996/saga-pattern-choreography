@@ -4,7 +4,9 @@ package proto;
 
 // Service to manage list of todo tasks
 service StockService {
+  rpc GetStock(StockRequest) returns (Stock);
   rpc UpdateStock(StockRequest) returns (StockResponse);
+  rpc MinusStock(StockRequest) returns (StockResponse);
 }
 
 message StockRequest{
@@ -14,4 +16,9 @@ message StockRequest{
 
 message StockResponse{
   string message = 1;
+}
+
+message Stock{
+  int32 id = 1;
+  int32 stock = 2;
 }

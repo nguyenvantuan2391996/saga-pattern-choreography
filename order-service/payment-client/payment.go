@@ -19,6 +19,29 @@ func NewPaymentClient(paymentURL string) *PaymentClient {
 	return &PaymentClient{paymentClient: paymentClient}
 }
 
+func (p *PaymentClient) GetPayment(ctx context.Context, id, userID int32) (*payment.Payment, error) {
+	res, err := p.paymentClient.GetPayment(ctx, &payment.PaymentRequest{
+		Id:     id,
+		UserId: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (p *PaymentClient) MinusPayment(ctx context.Context, id, userID, money int32) (*payment.PaymentResponse, error) {
+	res, err := p.paymentClient.MinusPayment(ctx, &payment.PaymentRequest{
+		Id:     id,
+		UserId: userID,
+		Money:  money,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (p *PaymentClient) UpdatePayment(ctx context.Context, id, userID, money int32) (*payment.PaymentResponse, error) {
 	res, err := p.paymentClient.UpdatePayment(ctx, &payment.PaymentRequest{
 		Id:     id,

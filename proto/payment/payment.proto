@@ -4,7 +4,9 @@ package proto;
 
 // Service to manage list of todo tasks
 service PaymentService {
+  rpc GetPayment(PaymentRequest) returns (Payment);
   rpc UpdatePayment(PaymentRequest) returns (PaymentResponse);
+  rpc MinusPayment(PaymentRequest) returns (PaymentResponse);
 }
 
 message PaymentRequest{
@@ -15,4 +17,10 @@ message PaymentRequest{
 
 message PaymentResponse{
   string message = 1;
+}
+
+message Payment{
+  int32 id = 1;
+  int32 user_id = 2;
+  int32 money = 3;
 }

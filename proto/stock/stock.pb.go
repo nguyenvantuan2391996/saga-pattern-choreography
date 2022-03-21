@@ -35,7 +35,7 @@ func (m *StockRequest) Reset()         { *m = StockRequest{} }
 func (m *StockRequest) String() string { return proto.CompactTextString(m) }
 func (*StockRequest) ProtoMessage()    {}
 func (*StockRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stock_e1f386c4001edfed, []int{0}
+	return fileDescriptor_stock_c7738b6a6df4e089, []int{0}
 }
 func (m *StockRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_StockRequest.Unmarshal(m, b)
@@ -80,7 +80,7 @@ func (m *StockResponse) Reset()         { *m = StockResponse{} }
 func (m *StockResponse) String() string { return proto.CompactTextString(m) }
 func (*StockResponse) ProtoMessage()    {}
 func (*StockResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_stock_e1f386c4001edfed, []int{1}
+	return fileDescriptor_stock_c7738b6a6df4e089, []int{1}
 }
 func (m *StockResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_StockResponse.Unmarshal(m, b)
@@ -107,9 +107,56 @@ func (m *StockResponse) GetMessage() string {
 	return ""
 }
 
+type Stock struct {
+	Id                   int32    `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+	Stock                int32    `protobuf:"varint,2,opt,name=stock" json:"stock,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Stock) Reset()         { *m = Stock{} }
+func (m *Stock) String() string { return proto.CompactTextString(m) }
+func (*Stock) ProtoMessage()    {}
+func (*Stock) Descriptor() ([]byte, []int) {
+	return fileDescriptor_stock_c7738b6a6df4e089, []int{2}
+}
+func (m *Stock) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Stock.Unmarshal(m, b)
+}
+func (m *Stock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Stock.Marshal(b, m, deterministic)
+}
+func (dst *Stock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Stock.Merge(dst, src)
+}
+func (m *Stock) XXX_Size() int {
+	return xxx_messageInfo_Stock.Size(m)
+}
+func (m *Stock) XXX_DiscardUnknown() {
+	xxx_messageInfo_Stock.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Stock proto.InternalMessageInfo
+
+func (m *Stock) GetId() int32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *Stock) GetStock() int32 {
+	if m != nil {
+		return m.Stock
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*StockRequest)(nil), "proto.StockRequest")
 	proto.RegisterType((*StockResponse)(nil), "proto.StockResponse")
+	proto.RegisterType((*Stock)(nil), "proto.Stock")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -123,7 +170,9 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for StockService service
 
 type StockServiceClient interface {
+	GetStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*Stock, error)
 	UpdateStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*StockResponse, error)
+	MinusStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*StockResponse, error)
 }
 
 type stockServiceClient struct {
@@ -132,6 +181,15 @@ type stockServiceClient struct {
 
 func NewStockServiceClient(cc *grpc.ClientConn) StockServiceClient {
 	return &stockServiceClient{cc}
+}
+
+func (c *stockServiceClient) GetStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*Stock, error) {
+	out := new(Stock)
+	err := grpc.Invoke(ctx, "/proto.StockService/GetStock", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *stockServiceClient) UpdateStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*StockResponse, error) {
@@ -143,14 +201,43 @@ func (c *stockServiceClient) UpdateStock(ctx context.Context, in *StockRequest, 
 	return out, nil
 }
 
+func (c *stockServiceClient) MinusStock(ctx context.Context, in *StockRequest, opts ...grpc.CallOption) (*StockResponse, error) {
+	out := new(StockResponse)
+	err := grpc.Invoke(ctx, "/proto.StockService/MinusStock", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for StockService service
 
 type StockServiceServer interface {
+	GetStock(context.Context, *StockRequest) (*Stock, error)
 	UpdateStock(context.Context, *StockRequest) (*StockResponse, error)
+	MinusStock(context.Context, *StockRequest) (*StockResponse, error)
 }
 
 func RegisterStockServiceServer(s *grpc.Server, srv StockServiceServer) {
 	s.RegisterService(&_StockService_serviceDesc, srv)
+}
+
+func _StockService_GetStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StockRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockServiceServer).GetStock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.StockService/GetStock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockServiceServer).GetStock(ctx, req.(*StockRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _StockService_UpdateStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -171,31 +258,59 @@ func _StockService_UpdateStock_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StockService_MinusStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StockRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockServiceServer).MinusStock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.StockService/MinusStock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockServiceServer).MinusStock(ctx, req.(*StockRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _StockService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.StockService",
 	HandlerType: (*StockServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "GetStock",
+			Handler:    _StockService_GetStock_Handler,
+		},
+		{
 			MethodName: "UpdateStock",
 			Handler:    _StockService_UpdateStock_Handler,
+		},
+		{
+			MethodName: "MinusStock",
+			Handler:    _StockService_MinusStock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "stock.proto",
 }
 
-func init() { proto.RegisterFile("stock.proto", fileDescriptor_stock_e1f386c4001edfed) }
+func init() { proto.RegisterFile("stock.proto", fileDescriptor_stock_c7738b6a6df4e089) }
 
-var fileDescriptor_stock_e1f386c4001edfed = []byte{
-	// 153 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_stock_c7738b6a6df4e089 = []byte{
+	// 184 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2e, 0x2e, 0xc9, 0x4f,
 	0xce, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x4a, 0x26, 0x5c, 0x3c, 0xc1,
 	0x20, 0xd1, 0xa0, 0xd4, 0xc2, 0xd2, 0xd4, 0xe2, 0x12, 0x21, 0x3e, 0x2e, 0xa6, 0xcc, 0x14, 0x09,
 	0x46, 0x05, 0x46, 0x0d, 0xd6, 0x20, 0xa6, 0xcc, 0x14, 0x21, 0x11, 0x2e, 0x56, 0xb0, 0x2e, 0x09,
 	0x26, 0xb0, 0x10, 0x84, 0xa3, 0xa4, 0xc9, 0xc5, 0x0b, 0xd5, 0x55, 0x5c, 0x90, 0x9f, 0x57, 0x9c,
 	0x2a, 0x24, 0xc1, 0xc5, 0x9e, 0x9b, 0x5a, 0x5c, 0x9c, 0x98, 0x9e, 0x0a, 0xd6, 0xcb, 0x19, 0x04,
-	0xe3, 0x1a, 0x79, 0x40, 0x2d, 0x08, 0x4e, 0x2d, 0x2a, 0xcb, 0x4c, 0x4e, 0x15, 0xb2, 0xe0, 0xe2,
-	0x0e, 0x2d, 0x48, 0x49, 0x2c, 0x49, 0x05, 0x8b, 0x0a, 0x09, 0x43, 0x9c, 0xa3, 0x87, 0xec, 0x08,
-	0x29, 0x11, 0x54, 0x41, 0x88, 0x1d, 0x49, 0x6c, 0x60, 0x41, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0xd1, 0x47, 0x34, 0x0e, 0xc7, 0x00, 0x00, 0x00,
+	0xe3, 0x2a, 0xe9, 0x72, 0xb1, 0x82, 0x95, 0x12, 0x67, 0xb2, 0xd1, 0x06, 0x46, 0xa8, 0x83, 0x82,
+	0x53, 0x8b, 0xca, 0x32, 0x93, 0x53, 0x85, 0x74, 0xb9, 0x38, 0xdc, 0x53, 0x4b, 0x20, 0x46, 0x08,
+	0x43, 0xdc, 0xae, 0x87, 0xec, 0x62, 0x29, 0x1e, 0x64, 0x41, 0x21, 0x0b, 0x2e, 0xee, 0xd0, 0x82,
+	0x94, 0xc4, 0x92, 0x54, 0x3c, 0x3a, 0x44, 0x50, 0x05, 0xa1, 0x5e, 0x30, 0xe7, 0xe2, 0xf2, 0xcd,
+	0xcc, 0x2b, 0x2d, 0x26, 0x55, 0x63, 0x12, 0x1b, 0x58, 0xd0, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff,
+	0x33, 0x9c, 0xd5, 0xce, 0x5f, 0x01, 0x00, 0x00,
 }

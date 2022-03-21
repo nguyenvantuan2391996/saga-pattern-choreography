@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"github.com/itimofeev/go-saga"
 	"github.com/jinzhu/gorm"
 	"saga-pattern-choreography/order-service/model"
@@ -25,31 +24,59 @@ func NewOrderServiceServer(db *gorm.DB, paymentClient *payment_client.PaymentCli
 	}
 }
 
-func (s *orderServiceServer) CreateOrder(ctx context.Context, req *order.CreateRequest) (*order.CreateResponse, error) {
-	err := s.db.Create(&model.Order{
-		ID:     req.Id,
-		UserID: req.UserId,
-		Status: req.Status,
-	}).Error
-
+func (s *orderServiceServer) CreateOrder(ctx context.Context, request *order.CreateRequest) (*order.CreateResponse, error) {
+	paymentDB, err := s.paymentService.GetPayment(ctx, request.Id, request.UserId)
 	if err != nil {
-		return &order.CreateResponse{
-			Message: "Failed",
-		}, err
+		return nil, err
+	}
+
+	stockDB, err := s.stockService.GetStock(ctx, request.Id)
+	if err != nil {
+		return nil, err
 	}
 
 	sagaPattern := saga.NewSaga("order-product")
 	err = sagaPattern.AddStep(&saga.Step{
-		Name: "update payment",
+		Name: "create order",
 		Func: func(context.Context) error {
-			_, err = s.paymentService.UpdatePayment(ctx, req.Id, req.UserId, 500)
-			if err != nil && errors.Is(err, errors.New("balance < money")) {
+			err := s.db.Create(&model.Order{
+				ID:     request.Id,
+				UserID: request.UserId,
+				Status: request.Status,
+			}).Error
+			if err != nil {
 				return err
 			}
 			return nil
 		},
 		CompensateFunc: func(context.Context) error {
-			_, err = s.paymentService.UpdatePayment(ctx, req.Id, req.UserId, -500)
+			_, err = s.UpdateOrder(ctx, &order.CreateRequest{
+				Id:     request.Id,
+				UserId: request.UserId,
+				Status: "pending",
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		Options: nil,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = sagaPattern.AddStep(&saga.Step{
+		Name: "update payment",
+		Func: func(context.Context) error {
+			_, err = s.paymentService.MinusPayment(ctx, request.Id, request.UserId, 500)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		CompensateFunc: func(context.Context) error {
+			_, err = s.paymentService.UpdatePayment(ctx, request.Id, request.UserId, paymentDB.Money)
 			if err != nil {
 				return err
 			}
@@ -64,14 +91,14 @@ func (s *orderServiceServer) CreateOrder(ctx context.Context, req *order.CreateR
 	err = sagaPattern.AddStep(&saga.Step{
 		Name: "update stock",
 		Func: func(context.Context) error {
-			_, err = s.stockService.UpdateStock(ctx, req.Id, 8)
-			if err != nil && errors.Is(err, errors.New("stock < 0")) {
+			_, err = s.stockService.MinusStock(ctx, request.Id, 8)
+			if err != nil {
 				return err
 			}
 			return nil
 		},
 		CompensateFunc: func(context.Context) error {
-			_, err = s.stockService.UpdateStock(ctx, req.Id, -8)
+			_, err = s.stockService.UpdateStock(ctx, request.Id, stockDB.Stock)
 			if err != nil {
 				return err
 			}
@@ -87,8 +114,8 @@ func (s *orderServiceServer) CreateOrder(ctx context.Context, req *order.CreateR
 		Name: "update order success",
 		Func: func(context.Context) error {
 			_, err = s.UpdateOrder(ctx, &order.CreateRequest{
-				Id:     req.Id,
-				UserId: req.UserId,
+				Id:     request.Id,
+				UserId: request.UserId,
 				Status: "success",
 			})
 			if err != nil {
@@ -98,8 +125,8 @@ func (s *orderServiceServer) CreateOrder(ctx context.Context, req *order.CreateR
 		},
 		CompensateFunc: func(context.Context) error {
 			_, err = s.UpdateOrder(ctx, &order.CreateRequest{
-				Id:     req.Id,
-				UserId: req.UserId,
+				Id:     request.Id,
+				UserId: request.UserId,
 				Status: "pending",
 			})
 			if err != nil {
